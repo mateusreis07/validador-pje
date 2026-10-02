@@ -37,7 +37,7 @@ npm start
 2. Em `/admin`:
    - **Carga completa** (a primeira vez, ou para reconferir tudo): consulta todas as competências.
      Com cerca de 60 classes, leva de 3 a 5 horas; rode fora do expediente. Se for interrompida,
-     o que já foi consultado é reaproveitado por 24 h.
+     o que já foi consultado é reaproveitado por 7 dias.
    - **Verificar atualizações** (rotina): refaz as listas de jurisdições, classes e assuntos, calcula
      a competência do que for novo e revalida 1/7 das competências conhecidas.
 3. Revise as mudanças (ou baixe a planilha) e clique em **Publicar no site**. O commit e o push
