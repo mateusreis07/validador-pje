@@ -3,224 +3,206 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Validador PJe/TJPA</title>
+<title>Competência PJe/TJPA</title>
+<meta name="description" content="Consulte a competência recomendada pelo PJe do TJPA para uma combinação de jurisdição, classe e assunto.">
 <style>
   :root {
     --bg: #f5f6f8; --card: #fff; --text: #1d2330; --muted: #6b7280;
     --border: #dde1e7; --accent: #1f5fbf; --accent-bg: #e8f0fc;
-    --ok: #18794e; --ok-bg: #e6f6ed; --err: #b42318; --err-bg: #fdecea;
+    --ok: #18794e; --ok-bg: #e6f6ed; --warn: #8a5a00; --warn-bg: #fdf3dc;
+    --err: #b42318; --err-bg: #fdecea;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --bg: #14171c; --card: #1d2128; --text: #e6e8eb; --muted: #9aa1ab;
       --border: #333943; --accent: #79a8f0; --accent-bg: #23324a;
-      --ok: #5fd39a; --ok-bg: #173a29; --err: #f5877d; --err-bg: #42201d;
+      --ok: #5fd39a; --ok-bg: #173a29; --warn: #f0c060; --warn-bg: #3d3115;
+      --err: #f5877d; --err-bg: #42201d;
     }
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--text); }
-  header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--card); }
+  header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--card); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: end; }
   header h1 { margin: 0; font-size: 18px; }
   header p { margin: 4px 0 0; color: var(--muted); }
+  #base { color: var(--muted); font-size: 13px; }
   main { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px 20px; }
   @media (max-width: 1100px) { main { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 640px) { main { grid-template-columns: 1fr; padding: 12px 16px; } }
-  section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; height: calc(100vh - 110px); min-height: 420px; }
+  @media (max-width: 640px) { main { grid-template-columns: 1fr; padding: 12px 16px; } header { padding: 12px 16px; } }
+  section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; height: calc(100vh - 120px); min-height: 420px; }
+  @media (max-width: 640px) { section { height: 60vh; min-height: 320px; } }
   section h2 { margin: 0; padding: 10px 12px 6px; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
   section h2 small { color: var(--muted); font-weight: normal; }
   .filtro { margin: 0 12px 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
-  ul { list-style: none; margin: 0; padding: 0 6px 6px; overflow-y: auto; flex: 1; }
-  li { padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; gap: 8px; }
-  li:hover { background: var(--bg); }
-  li.sel { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
-  li .cod { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3.5em; font-weight: normal; }
-  li .tag { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: normal; }
-  .vazio, .status { padding: 12px; color: var(--muted); }
-  .erro { margin: 0 12px 12px; padding: 10px; border-radius: 6px; background: var(--err-bg); color: var(--err); }
-  .resultado { margin: 0 12px 12px; padding: 10px; border-radius: 6px; }
-  .resultado.ok { background: var(--ok-bg); color: var(--ok); }
-  .resultado.nok { background: var(--err-bg); color: var(--err); }
-  .resultado ul { padding: 4px 0 0; overflow: visible; }
-  .resultado li { cursor: default; padding: 2px 0; }
-  .resultado li:hover { background: none; }
-  .detalhes { margin: 0 12px 12px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
-  .detalhes dt { color: var(--muted); }
-  .detalhes dd { margin: 0 0 6px; }
-  .dica { margin: 0 12px 8px; color: var(--muted); font-size: 12px; }
+  ul.lista { list-style: none; margin: 0; padding: 0 6px 6px; overflow-y: auto; flex: 1; }
+  ul.lista li { padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; gap: 8px; }
+  ul.lista li:hover { background: var(--bg); }
+  ul.lista li.sel { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+  ul.lista li.vazio { cursor: default; color: var(--muted); }
+  ul.lista li.vazio:hover { background: none; }
+  .cod { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3.5em; font-weight: normal; }
+  .painel { padding: 0 12px 12px; overflow-y: auto; }
+  .status { color: var(--muted); margin: 0; padding: 0 0 12px; }
+  .resultado { padding: 12px; border-radius: 6px; margin-bottom: 12px; }
+  .resultado strong { display: block; margin-bottom: 6px; }
+  .resultado ul { margin: 0; padding-left: 18px; }
+  .resultado p { margin: 4px 0 0; }
+  .ok { background: var(--ok-bg); color: var(--ok); }
+  .aviso { background: var(--warn-bg); color: var(--warn); }
+  .erro { background: var(--err-bg); color: var(--err); }
+  dl { margin: 0; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+  dt { color: var(--muted); }
+  dd { margin: 0 0 6px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Validador de vínculos PJe/TJPA</h1>
-  <p>Consulta ao vivo o ConsultaPJe do TJPA (1º grau). Em cada etapa aparece só o que o PJe vincula à seleção anterior.</p>
+  <div>
+    <h1>Competência recomendada PJe/TJPA</h1>
+    <p>Escolha a jurisdição, a classe e o assunto. Só aparecem as opções que o PJe aceita para a escolha anterior.</p>
+  </div>
+  <div id="base"></div>
 </header>
 <main>
   <section id="s-jur">
     <h2>1. Jurisdição <small class="contagem"></small></h2>
-    <input class="filtro" placeholder="Filtrar por nome ou id">
-    <ul></ul>
+    <input class="filtro" placeholder="Filtrar por nome" aria-label="Filtrar jurisdições">
+    <ul class="lista"><li class="vazio">Carregando…</li></ul>
   </section>
   <section id="s-cls">
     <h2>2. Classe <small class="contagem"></small></h2>
-    <input class="filtro" placeholder="Filtrar por nome ou código">
-    <ul><li class="vazio">Escolha uma jurisdição.</li></ul>
+    <input class="filtro" placeholder="Filtrar por nome ou código" aria-label="Filtrar classes">
+    <ul class="lista"><li class="vazio">Escolha uma jurisdição.</li></ul>
   </section>
   <section id="s-ass">
-    <h2>3. Assunto(s) <small class="contagem"></small></h2>
-    <input class="filtro" placeholder="Filtrar por nome ou código">
-    <p class="dica">Clique para marcar/desmarcar. Pode marcar mais de um.</p>
-    <ul><li class="vazio">Escolha uma classe.</li></ul>
+    <h2>3. Assunto <small class="contagem"></small></h2>
+    <input class="filtro" placeholder="Filtrar por nome ou código" aria-label="Filtrar assuntos">
+    <ul class="lista"><li class="vazio">Escolha uma classe.</li></ul>
   </section>
   <section id="s-comp">
-    <h2>4. Competência(s) no PJe</h2>
-    <div id="resultado"><p class="status">Escolha ao menos um assunto.</p></div>
-    <div id="detalhes"></div>
+    <h2>4. Competência recomendada</h2>
+    <div class="painel" id="resultado"><p class="status">Escolha um assunto.</p></div>
   </section>
 </main>
 
 <script>
-const estado = { jurisdicao: null, classe: null, assuntos: new Map() };
 const $ = (sel, raiz = document) => raiz.querySelector(sel);
 const escHtml = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const porNome = (a, b) => a.nome.localeCompare(b.nome, "pt");
 
-async function api(caminho, params = {}) {
-  const r = await fetch(caminho + "?" + new URLSearchParams(params));
-  const corpo = await r.json();
-  if (!r.ok) throw new Error(corpo.erro || "HTTP " + r.status);
-  return corpo;
+let meta = null;
+const cacheJ = {};
+const estado = { jurisdicao: null, dadosJ: null, classe: null, assunto: null };
+
+async function obter(url) {
+  const r = await fetch(url, { cache: "no-cache" });
+  if (!r.ok) throw new Error(r.status === 404 ? "Base ainda não publicada." : "Falha ao carregar " + url);
+  return r.json();
 }
 
-// Lista filtrável genérica
-function lista(secaoId, itens, { cod, nome, tag, selecionado, aoClicar }) {
+// Lista filtrável com seleção única
+function lista(secaoId, itens, aoClicar, selecionado) {
   const secao = $("#" + secaoId);
   const ul = $("ul", secao);
   const filtro = $(".filtro", secao);
-  $(".contagem", secao).textContent = itens.length + " itens";
-  $(".erro", secao)?.remove();
-
+  filtro.value = "";
+  $(".contagem", secao).textContent = itens.length ? itens.length + " opções" : "";
   function render() {
     const termo = filtro.value.trim().toLowerCase();
-    const visiveis = itens.filter((i) => !termo || (cod(i) + " " + nome(i)).toLowerCase().includes(termo));
+    const visiveis = itens.filter((i) => !termo || (i.cod + " " + i.nome).toLowerCase().includes(termo));
     ul.innerHTML = visiveis.length
-      ? visiveis.map((i, n) =>
-          `<li data-n="${itens.indexOf(i)}" class="${selecionado(i) ? "sel" : ""}">
-             <span class="cod">${escHtml(cod(i))}</span><span>${escHtml(nome(i))}</span>
-             ${tag && tag(i) ? `<span class="tag">${escHtml(tag(i))}</span>` : ""}
-           </li>`).join("")
-      : `<li class="vazio">${itens.length ? "Nada encontrado no filtro." : "O PJe não retornou itens."}</li>`;
+      ? visiveis.map((i) => `<li data-k="${escHtml(i.chave)}" class="${selecionado() === i.chave ? "sel" : ""}">${i.cod ? `<span class="cod">${escHtml(i.cod)}</span>` : ""}<span>${escHtml(i.nome)}</span></li>`).join("")
+      : `<li class="vazio">${itens.length ? "Nada encontrado no filtro." : "Nenhuma opção disponível."}</li>`;
   }
   filtro.oninput = render;
   ul.onclick = (e) => {
-    const li = e.target.closest("li[data-n]");
+    const li = e.target.closest("li[data-k]");
     if (!li) return;
-    aoClicar(itens[li.dataset.n]);
+    aoClicar(itens.find((i) => i.chave === li.dataset.k));
     render();
   };
   render();
-  return render;
 }
 
-function carregando(secaoId, msg = "Consultando o PJe…") {
+function limpar(secaoId, msg) {
   const secao = $("#" + secaoId);
-  $("ul", secao).innerHTML = `<li class="vazio">${msg}</li>`;
+  $("ul", secao).innerHTML = `<li class="vazio">${escHtml(msg)}</li>`;
   $(".contagem", secao).textContent = "";
   $(".filtro", secao).value = "";
 }
 
-function erro(secaoId, e) {
-  const secao = $("#" + secaoId);
-  $("ul", secao).innerHTML = "";
-  $(".erro", secao)?.remove();
-  $("ul", secao).insertAdjacentHTML("beforebegin", `<div class="erro">${escHtml(e.message)}</div>`);
-}
-
 async function iniciar() {
-  carregando("s-jur");
   try {
-    const jurs = (await api("/api/jurisdicoes")).sort((a, b) => a.descricao.localeCompare(b.descricao, "pt"));
-    lista("s-jur", jurs, {
-      cod: (j) => j.id, nome: (j) => j.descricao,
-      selecionado: (j) => j === estado.jurisdicao,
-      aoClicar: escolherJurisdicao,
-    });
-  } catch (e) { erro("s-jur", e); }
+    meta = await obter("dados/meta.json");
+  } catch (e) {
+    limpar("s-jur", e.message);
+    return;
+  }
+  const data = new Date(meta.geradoEm);
+  $("#base").textContent = "Base do PJe atualizada em " + data.toLocaleDateString("pt-BR") + " às " + data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const jurs = meta.jurisdicoes.map((j, n) => ({ chave: String(n), id: j.id, cod: "", nome: j.descricao })).sort(porNome);
+  lista("s-jur", jurs, escolherJurisdicao, () => estado.jurisdicao && estado.jurisdicao.chave);
 }
 
 async function escolherJurisdicao(j) {
-  estado.jurisdicao = j; estado.classe = null; estado.assuntos.clear();
-  carregando("s-cls");
-  carregando("s-ass", "Escolha uma classe.");
-  atualizarResultado();
+  Object.assign(estado, { jurisdicao: j, dadosJ: null, classe: null, assunto: null });
+  limpar("s-cls", "Carregando…");
+  limpar("s-ass", "Escolha uma classe.");
+  renderResultado();
   try {
-    const classes = (await api("/api/classes", { jurisdicao: j.id })).sort((a, b) => a.descricao.localeCompare(b.descricao, "pt"));
-    if (estado.jurisdicao !== j) return;
-    lista("s-cls", classes, {
-      cod: (c) => c.codigo, nome: (c) => c.descricao,
-      tag: (c) => c.recursal === "true" ? "recursal" : "",
-      selecionado: (c) => c === estado.classe,
-      aoClicar: escolherClasse,
-    });
-  } catch (e) { erro("s-cls", e); }
-}
-
-async function escolherClasse(c) {
-  estado.classe = c; estado.assuntos.clear();
-  carregando("s-ass");
-  atualizarResultado();
-  try {
-    const j = estado.jurisdicao;
-    const assuntos = (await api("/api/assuntos", { jurisdicao: j.id, classe: c.codigo })).sort((a, b) => a.descricao.localeCompare(b.descricao, "pt"));
-    if (estado.classe !== c) return;
-    lista("s-ass", assuntos, {
-      cod: (a) => a.codigo, nome: (a) => a.descricao,
-      tag: (a) => a.complementar === "true" ? "complementar" : "",
-      selecionado: (a) => estado.assuntos.has(a.codigo),
-      aoClicar: (a) => {
-        estado.assuntos.has(a.codigo) ? estado.assuntos.delete(a.codigo) : estado.assuntos.set(a.codigo, a);
-        atualizarResultado();
-      },
-    });
-  } catch (e) { erro("s-ass", e); }
-}
-
-let consultaAtual = 0;
-async function atualizarResultado() {
-  const { jurisdicao: j, classe: c, assuntos } = estado;
-  const res = $("#resultado");
-  renderDetalhes();
-  if (!j || !c || !assuntos.size) {
-    res.innerHTML = `<p class="status">Escolha ao menos um assunto.</p>`;
+    cacheJ[j.id] = cacheJ[j.id] || await obter(`dados/j/${encodeURIComponent(j.id)}.json`);
+  } catch (e) {
+    limpar("s-cls", e.message);
     return;
   }
-  const minha = ++consultaAtual;
-  res.innerHTML = `<p class="status">Consultando o PJe…</p>`;
-  try {
-    const comps = await api("/api/competencias", { jurisdicao: j.id, classe: c.codigo, assuntos: [...assuntos.keys()].join(",") });
-    if (minha !== consultaAtual) return;
-    res.innerHTML = comps.length
-      ? `<div class="resultado ok"><strong>✅ Combinação válida</strong>
-           <ul>${comps.map((x) => `<li><span class="cod">${escHtml(x.id)}</span>${escHtml(x.descricao)}</li>`).join("")}</ul></div>`
-      : `<div class="resultado nok"><strong>❌ Nenhuma competência</strong>
-           <p>O PJe não tem competência para essa combinação de classe e assunto(s) nesta jurisdição.</p></div>`;
-  } catch (e) {
-    if (minha !== consultaAtual) return;
-    res.innerHTML = `<div class="erro">${escHtml(e.message)}</div>`;
-  }
+  if (estado.jurisdicao !== j) return;
+  estado.dadosJ = cacheJ[j.id];
+  const classes = Object.keys(estado.dadosJ)
+    .map((c) => ({ chave: c, cod: c, nome: (meta.classes[c] || {}).descricao || c }))
+    .sort(porNome);
+  lista("s-cls", classes, escolherClasse, () => estado.classe);
 }
 
-function renderDetalhes() {
-  const { jurisdicao: j, classe: c, assuntos } = estado;
-  if (!c) { $("#detalhes").innerHTML = ""; return; }
-  const sn = (v) => v === "true" ? "Sim" : v === "false" ? "Não" : "—";
-  const parte = (p) => p && p.descTipoParte ? `${p.descTipoParte} (${p.idTipoParte})` : "—";
-  $("#detalhes").innerHTML = `<dl class="detalhes">
-    <dt>Jurisdição</dt><dd>${escHtml(j.id)} · ${escHtml(j.descricao)}</dd>
-    <dt>Classe</dt><dd>${escHtml(c.codigo)} · ${escHtml(c.descricao)}</dd>
-    <dt>Exige polo passivo</dt><dd>${sn(c.exigePoloPassivo)}</dd>
-    <dt>Recursal</dt><dd>${sn(c.recursal)}</dd>
-    <dt>Tipo de parte – polo ativo</dt><dd>${escHtml(parte(c.tipoPartePoloAtivo))}</dd>
-    <dt>Tipo de parte – polo passivo</dt><dd>${escHtml(parte(c.tipoPartePoloPassivo))}</dd>
-    <dt>Assunto(s)</dt><dd>${assuntos.size ? [...assuntos.values()].map((a) => escHtml(a.codigo + " · " + a.descricao)).join("<br>") : "—"}</dd>
+function escolherClasse(c) {
+  Object.assign(estado, { classe: c.chave, assunto: null });
+  const assuntos = Object.keys(estado.dadosJ[c.chave])
+    .map((a) => ({ chave: a, cod: a, nome: meta.assuntos[a] || a }))
+    .sort(porNome);
+  lista("s-ass", assuntos, escolherAssunto, () => estado.assunto);
+  renderResultado();
+}
+
+function escolherAssunto(a) {
+  estado.assunto = a.chave;
+  renderResultado();
+}
+
+function renderResultado() {
+  const { jurisdicao: j, classe: c, assunto: a, dadosJ } = estado;
+  const el = $("#resultado");
+  if (!j || !c || !a || !dadosJ) {
+    el.innerHTML = `<p class="status">Escolha ${!j ? "uma jurisdição" : !c ? "uma classe" : "um assunto"}.</p>`;
+    return;
+  }
+  const comps = dadosJ[c][a];
+  const cls = meta.classes[c] || {};
+  let bloco;
+  if (comps === null || comps === undefined) {
+    bloco = `<div class="resultado aviso"><strong>Competência não verificada</strong><p>Não foi possível consultar o PJe para esta combinação na última atualização.</p></div>`;
+  } else if (!comps.length) {
+    bloco = `<div class="resultado erro"><strong>Sem competência no PJe</strong><p>O PJe lista este assunto para a classe, mas não retorna competência nesta jurisdição. A petição provavelmente será rejeitada.</p></div>`;
+  } else {
+    bloco = `<div class="resultado ok"><strong>${comps.length === 1 ? "Competência recomendada" : "Competências possíveis"}</strong>
+      <ul>${comps.map((id) => `<li>${escHtml(meta.competencias[id] || "Competência " + id)}</li>`).join("")}</ul></div>`;
+  }
+  const sn = (v) => (v ? "Sim" : "Não");
+  el.innerHTML = bloco + `<dl>
+    <dt>Jurisdição</dt><dd>${escHtml(j.nome)}</dd>
+    <dt>Classe</dt><dd>${escHtml(c)} · ${escHtml(cls.descricao)}</dd>
+    <dt>Assunto</dt><dd>${escHtml(a)} · ${escHtml(meta.assuntos[a])}</dd>
+    <dt>Exige polo passivo</dt><dd>${sn(cls.exigePoloPassivo)}</dd>
+    ${cls.poloAtivo ? `<dt>Polo ativo</dt><dd>${escHtml(cls.poloAtivo)}</dd>` : ""}
+    ${cls.poloPassivo ? `<dt>Polo passivo</dt><dd>${escHtml(cls.poloPassivo)}</dd>` : ""}
   </dl>`;
 }
 

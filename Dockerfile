@@ -8,6 +8,7 @@ WORKDIR /app
 # O projeto não tem dependências externas; basta copiar o código
 COPY package.json server.js ./
 COPY lib ./lib
+COPY local ./local
 COPY public ./public
 
 USER node
