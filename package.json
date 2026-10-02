@@ -1,0 +1,12 @@
+{
+  "name": "validador-pje-tjpa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Consulta os vínculos reais Jurisdição → Classe → Assunto → Competência no PJe/TJPA via SOAP (ConsultaPJe)",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
