@@ -14,18 +14,20 @@ npm start
 
 Abra http://localhost:3000.
 
-## Publicar na Vercel
+## Publicar em servidor interno
 
-1. Envie este repositório para o GitHub.
-2. Na Vercel: **Add New → Project**, importe o repositório e clique em **Deploy**
-   (sem configuração extra; o `vercel.json` já fixa a região São Paulo, `gru1`).
+Veja [DEPLOY-TI.md](DEPLOY-TI.md) (Docker ou Node direto).
+
+O TJPA recusa (HTTP 403) chamadas vindas de provedores de nuvem, então o
+validador precisa rodar dentro da rede do MPPA. Testado na Vercel, inclusive
+na região São Paulo, sem sucesso.
 
 ## Estrutura
 
 - `public/index.html` — interface
-- `api/[rota].js` — função serverless da Vercel
-- `server.js` — servidor local
-- `lib/rotas.js` — rotas da API (compartilhadas)
+- `server.js` — servidor HTTP (também expõe `/saude`)
+- `lib/rotas.js` — rotas da API
+- `Dockerfile` — imagem para o servidor interno
 - `lib/pje.js` — cliente SOAP do ConsultaPJe
 - `ConsultaPJe.wsdl` — contrato do serviço
 
