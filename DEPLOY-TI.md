@@ -20,7 +20,7 @@ Vercel, inclusive na região São Paulo. A partir da rede do MPPA o acesso funci
 
 | Item | Valor |
 |---|---|
-| Saída de rede (HTTPS) | `https://pje.tjpa.jus.br/pje-mni-1g/ConsultaPJe` (porta 443) |
+| Saída de rede (HTTPS, porta 443) | `pje.tjpa.jus.br` (TJPA) e `pjews.tjce.jus.br` (TJCE) |
 | Porta de entrada | 3000 (configurável pela variável `PORT`) |
 | Recursos | Mínimos: ~100 MB de RAM, CPU desprezível |
 | Usuários | Equipe interna, pela rede do MPPA ou VPN |

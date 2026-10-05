@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Validador PJe/TJPA</title>
+<title>Validador PJe</title>
 <style>
   :root {
     --bg: #f5f6f8; --card: #fff; --text: #1d2330; --muted: #6b7280;
@@ -19,9 +19,12 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--text); }
-  header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--card); }
+  header { padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--card); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 16px; }
   header h1 { margin: 0; font-size: 18px; }
   header p { margin: 4px 0 0; color: var(--muted); }
+  header label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  header select { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); min-width: 200px; }
+  @media (max-width: 640px) { header { padding: 12px 16px; } header label, header select { width: 100%; } }
   main { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px 20px; }
   @media (max-width: 1100px) { main { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 640px) { main { grid-template-columns: 1fr; padding: 12px 16px; } }
@@ -51,8 +54,13 @@
 </head>
 <body>
 <header>
-  <h1>Validador de vínculos PJe/TJPA</h1>
-  <p>Consulta ao vivo o ConsultaPJe do TJPA (1º grau). Em cada etapa aparece só o que o PJe vincula à seleção anterior.</p>
+  <div>
+    <h1>Validador de vínculos PJe</h1>
+    <p>Consulta ao vivo o ConsultaPJe do tribunal escolhido. Em cada etapa aparece só o que o PJe vincula à seleção anterior.</p>
+  </div>
+  <label>Tribunal
+    <select id="tribunal"></select>
+  </label>
 </header>
 <main>
   <section id="s-jur">
@@ -79,11 +87,12 @@
 </main>
 
 <script>
-const estado = { jurisdicao: null, classe: null, assuntos: new Map() };
+const estado = { tribunal: null, jurisdicao: null, classe: null, assuntos: new Map() };
 const $ = (sel, raiz = document) => raiz.querySelector(sel);
 const escHtml = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function api(caminho, params = {}) {
+  if (estado.tribunal) params = { tribunal: estado.tribunal.id, ...params };
   const r = await fetch(caminho + "?" + new URLSearchParams(params));
   const corpo = await r.json();
   if (!r.ok) throw new Error(corpo.erro || "HTTP " + r.status);
@@ -122,6 +131,7 @@ function lista(secaoId, itens, { cod, nome, tag, selecionado, aoClicar }) {
 
 function carregando(secaoId, msg = "Consultando o PJe…") {
   const secao = $("#" + secaoId);
+  $(".erro", secao)?.remove();
   $("ul", secao).innerHTML = `<li class="vazio">${msg}</li>`;
   $(".contagem", secao).textContent = "";
   $(".filtro", secao).value = "";
@@ -134,10 +144,41 @@ function erro(secaoId, e) {
   $("ul", secao).insertAdjacentHTML("beforebegin", `<div class="erro">${escHtml(e.message)}</div>`);
 }
 
+// Tribunal salvo na URL (?tribunal=) ou da última visita; o padrão é o primeiro da lista
+function tribunalInicial(lista) {
+  let id = new URLSearchParams(location.search).get("tribunal");
+  if (!id) { try { id = localStorage.getItem("tribunal"); } catch { /* armazenamento indisponível */ } }
+  return lista.find((t) => t.id === id) || lista[0];
+}
+
 async function iniciar() {
+  try {
+    const tribunais = await api("/api/tribunais");
+    const sel = $("#tribunal");
+    sel.innerHTML = tribunais.map((t) => `<option value="${escHtml(t.id)}">${escHtml(t.nome)}</option>`).join("");
+    const inicial = tribunalInicial(tribunais);
+    sel.value = inicial.id;
+    sel.onchange = () => escolherTribunal(tribunais.find((t) => t.id === sel.value));
+    escolherTribunal(inicial);
+  } catch (e) { erro("s-jur", e); }
+}
+
+async function escolherTribunal(t) {
+  Object.assign(estado, { tribunal: t, jurisdicao: null, classe: null });
+  estado.assuntos.clear();
+  try { localStorage.setItem("tribunal", t.id); } catch { /* armazenamento indisponível */ }
+  const url = new URL(location.href);
+  url.searchParams.set("tribunal", t.id);
+  history.replaceState(null, "", url);
+  document.title = "Validador PJe – " + t.nome;
+
   carregando("s-jur");
+  carregando("s-cls", "Escolha uma jurisdição.");
+  carregando("s-ass", "Escolha uma classe.");
+  atualizarResultado();
   try {
     const jurs = (await api("/api/jurisdicoes")).sort((a, b) => a.descricao.localeCompare(b.descricao, "pt"));
+    if (estado.tribunal !== t) return;
     lista("s-jur", jurs, {
       cod: (j) => j.id, nome: (j) => j.descricao,
       selecionado: (j) => j === estado.jurisdicao,
@@ -187,12 +228,12 @@ let consultaAtual = 0;
 async function atualizarResultado() {
   const { jurisdicao: j, classe: c, assuntos } = estado;
   const res = $("#resultado");
+  const minha = ++consultaAtual; // invalida respostas de consultas anteriores
   renderDetalhes();
   if (!j || !c || !assuntos.size) {
     res.innerHTML = `<p class="status">Escolha ao menos um assunto.</p>`;
     return;
   }
-  const minha = ++consultaAtual;
   res.innerHTML = `<p class="status">Consultando o PJe…</p>`;
   try {
     const comps = await api("/api/competencias", { jurisdicao: j.id, classe: c.codigo, assuntos: [...assuntos.keys()].join(",") });
@@ -214,6 +255,7 @@ function renderDetalhes() {
   const sn = (v) => v === "true" ? "Sim" : v === "false" ? "Não" : "—";
   const parte = (p) => p && p.descTipoParte ? `${p.descTipoParte} (${p.idTipoParte})` : "—";
   $("#detalhes").innerHTML = `<dl class="detalhes">
+    <dt>Tribunal</dt><dd>${escHtml(estado.tribunal.nome)}</dd>
     <dt>Jurisdição</dt><dd>${escHtml(j.id)} · ${escHtml(j.descricao)}</dd>
     <dt>Classe</dt><dd>${escHtml(c.codigo)} · ${escHtml(c.descricao)}</dd>
     <dt>Exige polo passivo</dt><dd>${sn(c.exigePoloPassivo)}</dd>

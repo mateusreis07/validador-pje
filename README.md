@@ -1,8 +1,20 @@
-# Validador PJe/TJPA
+# Validador PJe
 
-Consulta ao vivo, no PJe do TJPA (1º grau), os vínculos reais entre
+Consulta ao vivo, no PJe do tribunal escolhido, os vínculos reais entre
 **Jurisdição → Classe → Assunto(s) → Competência**, usando o serviço SOAP público
 `ConsultaPJe` (somente operações de consulta, sem autenticação).
+
+Tribunais disponíveis (em `lib/tribunais.js`):
+
+| Tribunal | Endereço do serviço |
+|---|---|
+| TJPA – 1º grau | https://pje.tjpa.jus.br/pje-mni-1g/ConsultaPJe |
+| TJPA – 2º grau | https://pje.tjpa.jus.br/pje-mni-2g/ConsultaPJe |
+| TJCE – 1º grau | https://pjews.tjce.jus.br/pje1grau/ConsultaPJe |
+| TJCE – 2º grau | https://pjews.tjce.jus.br/pje2grau/ConsultaPJe |
+
+Outros tribunais com PJe costumam expor o mesmo serviço: para incluir um, basta acrescentar
+uma linha em `lib/tribunais.js` com o `soap:address` do WSDL (`.../ConsultaPJe?wsdl`).
 
 O TJPA recusa (HTTP 403) chamadas vindas de provedores de nuvem, então o validador
 precisa rodar na rede do MP.
@@ -33,14 +45,18 @@ Veja [DEPLOY-TI.md](DEPLOY-TI.md) (Docker ou Node direto).
 - `server.js` — servidor HTTP (também expõe `/saude`)
 - `lib/rotas.js` — rotas da API
 - `lib/pje.js` — cliente SOAP do ConsultaPJe
+- `lib/tribunais.js` — tribunais e endereços do serviço
 - `iniciar-validador.bat` — atalho para iniciar no Windows
 - `Dockerfile` — imagem para o servidor interno
-- `ConsultaPJe.wsdl` — contrato do serviço
+- `ConsultaPJe.wsdl` — contrato do serviço (igual em todos os tribunais testados)
 
 ## API
 
+Todas as rotas aceitam `tribunal` (por exemplo `tjce-1g`); sem ele, usam `tjpa-1g`.
+
 | Rota | Parâmetros |
 |---|---|
+| `/api/tribunais` | — |
 | `/api/jurisdicoes` | — |
 | `/api/classes` | `jurisdicao` |
 | `/api/assuntos` | `jurisdicao`, `classe` |
